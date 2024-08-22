@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <h1 class="text-center">Welcome to the Unpredictable App</h1>
+  <p class="lead text-center">The application that behaves in a completely unpredictable manner!</p>
+  <br>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Web Test</h5>
+          <p class="card-text">Responds with a variable delay and occasionally simulates a timeout or server error. Click on the "Start" button to test the /test endpoint which will randomly give you a response with variable delay, a 500 error, or a 15-second delay.</p>
+          <button class="btn btn-primary" onclick="startRequests()">Start</button>
+          <button class="btn btn-secondary" onclick="stopRequests()">Stop</button>
+          <button class="btn btn-danger" onclick="clearLog()">Clear</button>
+          <div id="log" style="margin-top: 20px;">
+            <!-- Log will be appended here -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Direct Test Link</h5>
+          <p class="card-text">Click the button below to open the /test endpoint directly in your browser.</p>
+          <a href="/test" class="btn btn-primary">Go to /test</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let intervalId;
+    let transactionCount = 0;
+
+    function startRequests() {
+        intervalId = setInterval(makeRequest, 1000);
+    }
+
+    function stopRequests() {
+        clearInterval(intervalId);
+    }
+
+    function clearLog() {
+        document.getElementById('log').innerHTML = '';
+        transactionCount = 0;
+    }
+
+    function makeRequest() {
+        const transactionNumber = ++transactionCount;
+        const startTime = performance.now();
+
+        fetch('/test')
+            .then(response => response.text().then(text => ({ status: response.status, text })))
+            .then(data => {
+                let duration = NaN;
+                if (data.status === 200) {
+                    const endTime = performance.now();
+                    const match = data.text.match(/happened in ([\d.]+) milliseconds/);
+                    if (match) {
+                        duration = parseFloat(match[1]);
+                    } else {
+                        duration = endTime - startTime;
+                    }
+                }
+                const logEntry = document.createElement('p');
+                logEntry.textContent = `#: ${transactionNumber}, Time: ${duration.toFixed(2)} ms, Status: ${data.status}`;
+                document.getElementById('log').appendChild(logEntry);
+            })
+            .catch(error => {
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                const logEntry = document.createElement('p');
+                logEntry.textContent = `#: ${transactionNumber}, Time: ${duration.toFixed(2)} ms, Error: ${error}`;
+                document.getElementById('log').appendChild(logEntry);
+            });
+    }
+  </script>
+{% endblock %}

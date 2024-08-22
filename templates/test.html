@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Unpredictable Server Test{% endblock %}
+
+{% block content %}
+  <h1 class="text-center">Test Endpoint</h1>
+  <p class="lead text-center">{{ message }}</p>
+  <div class="text-center">
+    <a href="/" class="btn btn-primary">Refresh</a> <a href="/test" class="btn btn-primary">Menu</a>
+  </div>
+{% endblock %}
