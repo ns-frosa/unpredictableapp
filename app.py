@@ -1,6 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import time
 import random
+import socket
 
 app = Flask(__name__)
 
@@ -12,17 +13,19 @@ def unpredictable():
     weight1 = 0.60  # 60% for variable delay
     weight2 = 0.10  # 10% for internal server error
     weight3 = 0.15  # 15% for 15 seconds delay
-    weight4 = 0.15  # 15% for timeout (no response)
+    weight4 = 0.15  # 15% for connection abort (no response)
 
     if random_value < weight4:  # First 15%
-        # Simulate a timeout by not sending a response
-        while True:
-            time.sleep(1)  # Keep the connection open without responding
+        # Abort the connection by closing the socket without responding
+        socket_fd = request.environ.get('wsgi.input').raw._sock
+        socket_fd.shutdown(socket.SHUT_RDWR)
+        socket_fd.close()
+        return "", 444  # 444 is a custom status code indicating no response was given
 
     elif random_value < weight4 + weight3:  # Next 15% after the first 15%
         # Simulate a timeout with a 15 seconds delay
         time.sleep(15)
-        return "Request Timeout", 408
+        return "", 444  # Return nothing, simulating a non-response
 
     elif random_value < weight4 + weight3 + weight2:  # Next 10% after the first 30%
         # Simulate an internal server error
